@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 import { defaultCache } from "@serwist/next/worker";
-import { installSerwist } from "@serwist/sw";
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
+import { Serwist } from "serwist";
 
 declare global {
   interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -11,13 +11,14 @@ declare global {
 
 declare const self: ServiceWorkerGlobalScope;
 
-installSerwist({
+// Shared/public pages (/s/[token]) are read-only snapshots — defaultCache's
+// network-first strategy for navigations keeps them from going stale.
+const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
   skipWaiting: true,
   clientsClaim: true,
   navigationPreload: true,
   runtimeCaching: defaultCache,
-  // Shared/public pages (/s/[token]) are read-only snapshots — never serve
-  // a stale cached copy of someone's shared library from the cache alone;
-  // defaultCache's network-first strategy for navigations already covers this.
 });
+
+serwist.addEventListeners();
